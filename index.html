@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebGPU VideoFrame Grayscale</title>
+</head>
+<body>
+<button id="start">Start</button>
+<video id="src" width="640" height="360" muted playsinline></video>
+<canvas id="upscaled" width="1280" height="720"></canvas>
+
+<script type="module">
+    import { createProcessor } from './webgpu-processor.js';
+
+    const btn = document.getElementById('start');
+    const canvas = document.getElementById('upscaled');
+    const videoEl = document.getElementById('src');
+    let videoStream, running = false;
+
+    if (!createProcessor.isSupported) {
+        alert('WebGPU and/or WebCodecs are not supported in this browser.');
+    }
+
+    const createProcessFrame = await createProcessor();
+    const processFrame = createProcessFrame(canvas);
+
+    btn.onclick = async () => {
+        if (running) {
+            running = false;
+            btn.textContent = 'Start';
+            if (videoStream) {
+                videoStream.getTracks().forEach(t => t.stop());
+                videoEl.srcObject = null;
+            }
+
+            return;
+        }
+
+        btn.textContent = 'Stop';
+
+        videoStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 640, aspectRatio: 16/9 }
+        });
+
+        videoEl.srcObject = videoStream;
+        await videoEl.play();
+
+        running = true;
+        videoEl.requestVideoFrameCallback(frameLoop);
+
+        async function frameLoop() {
+            if (!running) return;
+
+            const frame = new VideoFrame(videoEl);
+            try {
+                processFrame(frame);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                frame.close();
+            }
+            videoEl.requestVideoFrameCallback(frameLoop);
+        }
+    };
+</script>
+</body>
+</html>
