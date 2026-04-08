@@ -3,9 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>WebGPU VideoFrame Grayscale</title>
+    <style>
+        #src {
+            display: block;
+        }
+        #upscaled {
+            display: block;
+            transform: scale(0.5);
+            transform-origin: top left;
+        }
+    </style>
 </head>
 <body>
-<button id="start">Start</button>
+<div><button id="start">Start</button></div>
 <video id="src" width="640" height="360" muted playsinline></video>
 <canvas id="upscaled" width="1280" height="720"></canvas>
 
